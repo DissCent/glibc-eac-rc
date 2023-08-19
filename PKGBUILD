@@ -8,8 +8,8 @@
 
 pkgbase=glibc
 pkgname=(glibc lib32-glibc)
-pkgver=2.37
-_commit=7c32cb7dd88cf100b0b412163896e30aa2ee671a
+pkgver=2.38
+_commit=6b99458d197ab779ebb6ff632c168e2cbfa4f543
 pkgrel=3
 arch=(x86_64)
 url='https://www.gnu.org/software/libc'
@@ -22,15 +22,19 @@ source=(git+https://sourceware.org/git/glibc.git#commit=${_commit}
         lib32-glibc.conf
         sdt.h sdt-config.h
         reenable_DT_HASH.patch
-		0001-Revert-elf-Clean-up-GLIBC_PRIVATE-exports-of-interna.patch
-		0001-Revert-Install-shared-objects-under-their-ABI-names.patch
-		0002-Revert-elf-Generalize-name-based-DSO-recognition-in-.patch
+        fix-malloc-p1.patch
+        fix-malloc-p2.patch
+        0001-Revert-elf-Clean-up-GLIBC_PRIVATE-exports-of-interna.patch
+        0001-Revert-Install-shared-objects-under-their-ABI-names.patch
+        0002-Revert-elf-Generalize-name-based-DSO-recognition-in-.patch
         0003-Revert-Makerules-Remove-lib-version-subdir-version.patch
         0004-Revert-nptl_db-Install-libthread_db-under-a-regular-.patch
 )
 validpgpkeys=(7273542B39962DF7B299931416792B4EA25340F8 # Carlos O'Donell
               BC7C7372637EC10C57D7AA6579C43DFBF1CF2187) # Siddhesh Poyarekar
 b2sums=('SKIP'
+        'SKIP'
+        'SKIP'
         'SKIP'
         'SKIP'
         'SKIP'
@@ -60,6 +64,9 @@ prepare() {
   # which relies on DT_HASH to be present in these libs.
   # reconsider 2023-01
   patch -Np1 -i "${srcdir}"/reenable_DT_HASH.patch
+
+  patch -Np1 -i "${srcdir}"/fix-malloc-p1.patch
+  patch -Np1 -i "${srcdir}"/fix-malloc-p2.patch
 }
 
 build() {
@@ -69,11 +76,11 @@ build() {
       --with-bugurl=https://bugs.archlinux.org/
       --enable-bind-now
       --enable-cet
+      --enable-fortify-source
       --enable-kernel=4.4
       --enable-multi-arch
       --enable-stack-protector=strong
       --enable-systemtap
-      --disable-crypt
       --disable-profile
       --disable-werror
   )
@@ -88,20 +95,13 @@ build() {
   # Credits @allanmcrae
   # https://github.com/allanmcrae/toolchain/blob/f18604d70c5933c31b51a320978711e4e6791cf1/glibc/PKGBUILD
   # remove fortify for building libraries
-  CFLAGS=${CFLAGS/-Wp,-D_FORTIFY_SOURCE=2/}
+  # CFLAGS=${CFLAGS/-Wp,-D_FORTIFY_SOURCE=2/}
 
   "${srcdir}"/glibc/configure \
       --libdir=/usr/lib \
       --libexecdir=/usr/lib \
       "${_configure_flags[@]}"
 
-  # build libraries with fortify disabled
-  echo "build-programs=no" >> configparms
-  make -O
-
-  # re-enable fortify for programs
-  sed -i "/build-programs=/s#no#yes#" configparms
-  echo "CFLAGS += -Wp,-D_FORTIFY_SOURCE=2" >> configparms
   make -O
 
   # build info pages manually for reproducibility
@@ -122,13 +122,6 @@ build() {
       --libexecdir=/usr/lib32 \
       "${_configure_flags[@]}"
 
-  # build libraries with fortify disabled
-  echo "build-programs=no" >> configparms
-  make -O
-
-  # re-enable fortify for programs
-  sed -i "/build-programs=/s#no#yes#" configparms
-  echo "CFLAGS += -Wp,-D_FORTIFY_SOURCE=2" >> configparms
   make -O
 
   # pregenerate C.UTF-8 locale until it is built into glibc
@@ -141,7 +134,7 @@ build() {
 skip_test() {
   test=${1}
   file=${2}
-  sed -i "s/\b${test}\b//" "${srcdir}"/glibc/${file}
+  sed -i "/\b${test} /d" "${srcdir}"/glibc/${file}
 }
 
 check() {
@@ -163,9 +156,7 @@ check() {
   skip_test tst-ntp_gettimex        sysdeps/unix/sysv/linux/Makefile
   skip_test tst-pkey                sysdeps/unix/sysv/linux/Makefile
   skip_test tst-process_mrelease    sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-ttyname             sysdeps/unix/sysv/linux/Makefile
   skip_test tst-adjtime             time/Makefile
-  skip_test tst-clock2              time/Makefile
 
   make -O check
 }

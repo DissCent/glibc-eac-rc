@@ -23,9 +23,9 @@ index 67428f2de2..5bcf73869b 100644
    tst-debug1 \
    tst-deep1 \
 -  tst-dl-is_dso \
+   tst-dlclose-lazy \
    tst-dlmodcount \
-   tst-dlmopen1 \
-   tst-dlmopen3 \
+   tst-dlmopen-dlerror \
 diff --git a/elf/ldconfig.c b/elf/ldconfig.c
 index 57bb95ebc3..3924362ce9 100644
 --- a/elf/ldconfig.c

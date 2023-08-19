@@ -37,27 +37,27 @@ index 3536b6af5e..b5f19b48c3 100644
 --- a/elf/Makefile
 +++ b/elf/Makefile
 @@ -290,6 +290,7 @@ tests-static-internal := \
+   tests-static-internal := \
+   tst-dl-printf-static \
+   tst-dl_find_object-static \
++  tst-libc_dlvsym-static \
+   tst-ptrguard1-static \
    tst-stackguard1-static \
    tst-tls1-static \
-   tst-tls1-static-non-pie \
-+  tst-libc_dlvsym-static
-   # tests-static-internal
-
- CRT-tst-tls1-static-non-pie := $(csu-objpfx)crt1.o
 @@ -498,6 +499,7 @@ tests-internal += \
+   tst-dl_find_object \
+   tst-dl_find_object-threads \
    tst-dlmopen2 \
++  tst-libc_dlvsym \
    tst-ptrguard1 \
    tst-stackguard1 \
-+  tst-libc_dlvsym \
    tst-tls-surplus \
-   tst-tls3 \
-   tst-tls6 \
 @@ -820,6 +822,7 @@ modules-names = \
-   tst-latepthreadmod \
    tst-ldconfig-ld-mod \
-   tst-main1mod \
+   tst-ldconfig-soname-lib-with-soname \
+   tst-ldconfig-soname-lib-without-soname \
 +  tst-libc_dlvsym-dso \
-   tst-nodelete2mod \
+   tst-main1mod \
    tst-nodelete-dlclose-dso \
    tst-nodelete-dlclose-plugin \
 @@ -939,7 +942,7 @@ modules-names += \
